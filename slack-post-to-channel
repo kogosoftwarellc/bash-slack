@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -e
+
+script_name="$(basename $0)"
+
+function assert_truthy() {
+  if [[ -z "$2" ]]; then
+    error "$1 wasn't truthy" && exit 1
+  fi
+}
+
+function error() {
+  echo "$script_name: $1" >&2
+}
+
+function log() {
+  echo "$script_name: $1"
+}
+
+channel=''
+endpoint=''
+icon_url=''
+text=''
+username=''
+
+while [ "$#" != 0 ];do
+  case "$1" in
+    --channel) channel="$2" && shift 2;;
+    --endpoint) endpoint="$2" && shift 2;;
+    --icon-url) icon_url="$2" && shift 2;;
+    --text) text="$2" && shift 2;;
+    --username)
+      username="$2" && shift 2;;
+    *) error "Unknown option $1" && exit 1;;
+  esac
+done
+
+assert_truthy --channel "$channel"
+assert_truthy --endpoint "$endpoint"
+assert_truthy --icon-url "$icon_url"
+assert_truthy --text "$text"
+assert_truthy --username "$username"
+
+q='"'
+curl -X POST --data-urlencode \
+  "payload={ \
+    ${q}channel${q}: ${q}#$channel${q},\
+    ${q}username${q}: ${q}$username${q}, \
+    ${q}icon_url${q}: ${q}$icon_url${q}, \
+    ${q}text${q}: ${q}$text${q} \
+  }" \
+  "$endpoint"
